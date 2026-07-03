@@ -1,0 +1,153 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Employee Details</title>
+</head>
+<body>
+
+<h2>Employee Details</h2>
+
+<p id="message"></p>
+
+<table border="1" cellpadding="10">
+    <thead>
+        <tr>
+            <th>ID</th>
+            <th>Name</th>
+            <th>Department</th>
+            <th>Salary</th>
+            <th>Update</th>
+            <th>Delete</th>
+        </tr>
+    </thead>
+    <tbody id="employeeTable"></tbody>
+</table>
+
+<br>
+
+<a href="index.html">Add New Employee</a>
+
+<script>
+
+loadEmployees();
+
+function loadEmployees(){
+
+    fetch("/employee")
+    .then(response => response.json())
+    .then(data => {
+
+        let rows = "";
+
+        data.forEach(emp => {
+
+            rows += `
+            <tr>
+                <td>${emp.id}</td>
+                <td><input type="text" id="name${emp.id}" value="${emp.name}"></td>
+                <td><input type="text" id="dept${emp.id}" value="${emp.dept}"></td>
+                <td><input type="number" id="salary${emp.id}" value="${emp.salary}"></td>
+
+                <td>
+                    <button onclick="updateEmployee(${emp.id})">
+                        Update
+                    </button>
+                </td>
+
+                <td>
+                    <button onclick="deleteEmployee(${emp.id})">
+                        Delete
+                    </button>
+                </td>
+
+            </tr>
+            `;
+
+        });
+
+        document.getElementById("employeeTable").innerHTML = rows;
+
+    });
+
+}
+
+function updateEmployee(id){
+
+    const currentName = document.getElementById("name"+id).value;
+    const currentDept = document.getElementById("dept"+id).value;
+    const currentSalary = document.getElementById("salary"+id).value;
+
+    const name = prompt("Enter New Name", currentName);
+    if(name == null) return;
+
+    const dept = prompt("Enter New Department", currentDept);
+    if(dept == null) return;
+
+    const salary = prompt("Enter New Salary", currentSalary);
+    if(salary == null) return;
+
+    fetch("/employee/" + id,{
+        method:"PUT",
+        headers:{
+            "Content-Type":"application/json"
+        },
+        body:JSON.stringify({
+            name:name,
+            dept:dept,
+            salary:parseFloat(salary)
+        })
+    })
+    .then(response=>{
+        if(!response.ok){
+            throw new Error("Update Failed");
+        }
+        return response.json();
+    })
+    .then(data=>{
+
+        document.getElementById("message").innerHTML="Employee Updated Successfully";
+        document.getElementById("message").style.color="green";
+
+        loadEmployees();
+
+    })
+    .catch(()=>{
+
+        document.getElementById("message").innerHTML="Update Failed";
+        document.getElementById("message").style.color="red";
+
+    });
+
+}
+
+function deleteEmployee(id){
+
+    if(confirm("Delete this employee?")){
+
+        fetch("/employee/"+id,{
+            method:"DELETE"
+        })
+        .then(response=>response.text())
+        .then(msg=>{
+
+            document.getElementById("message").innerHTML=msg;
+            document.getElementById("message").style.color="green";
+
+            loadEmployees();
+
+        })
+        .catch(()=>{
+
+            document.getElementById("message").innerHTML="Delete Failed";
+            document.getElementById("message").style.color="red";
+
+        });
+
+    }
+
+}
+
+</script>
+
+</body>
+</html>
